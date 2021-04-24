@@ -33,12 +33,38 @@ library(plotly)
 library(leaflet)
 library(tidyverse)
 library(sf)
+library(dplyr)
 
 # load data for plot
 
+stadtteil <- readRDS("data/stadtteile_profil_updated.rds") %>%
+  transform(arbeitslosenanteil_in_percent_dez_2019 = as.numeric(arbeitslosenanteil_in_percent_dez_2019)) %>% 
+  mutate_at(vars(arbeitslosenanteil_in_percent_dez_2019, anteil_der_bevolkerung_mit_migrations_hintergrund_in_percent), funs(round(., 1)))
+
 # plotly
 
+plotobject <- plot_ly(data = stadtteil, 
+                      x= ~anteil_der_bevolkerung_mit_migrations_hintergrund_in_percent, 
+                      y = ~arbeitslosenanteil_in_percent_dez_2019, 
+                      type="scatter", 
+                      mode = "markers",
+                      hoverinfo = "text",
+                      text = ~paste('<br>Migrationsanteil: ', anteil_der_bevolkerung_mit_migrations_hintergrund_in_percent,
+                                    '<br>Arbeitslosenanteil: ', arbeitslosenanteil_in_percent_dez_2019, 
+                                    '<br>Stedtteil: ', stadtteil),
+                      showlegend = FALSE) %>%
+  layout(title = "Verhältnis von Arbeitslosen und Menschen mit Migrationshintergrund in Hamburg",
+         xaxis = list(title = "Anteil Migrationshintergrund in %"),
+         yaxis = list(title = "Arbeitslosenanteil in %"))
+
+
+htmlwidgets::saveWidget(as_widget(plotobject), "myfirstplot.html")
+
 # load data for map
+
+stadtteile_gps <- readRDS("data/stadtteile_wsg84.RDS") %>% 
+  rename(stadtteil = Stadtteil) %>%
+  rename(bezirk = Bezirk)
 
 # join data
 stadtteile <- stadtteile %>% 
